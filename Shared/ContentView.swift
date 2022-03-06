@@ -8,9 +8,33 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    @ObservedObject var viewModel = WebViewModel()
+    @State var bar = false
+    @State var webTitle : String = ""
+    @State var showAlert : Bool = false
+    
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        NavigationView {
+            ZStack {
+                VStack {
+                    SwiftUIWebView(url: URL(string: "http://localhost:3000"), viewModel: viewModel)
+                }
+                .navigationBarTitle(Text(webTitle), displayMode: .inline)
+                .alert(isPresented: $showAlert) {
+                    Alert(title: Text("Hello"), message: Text("Alert from React"), dismissButton: .default(Text("OK"), action: {
+                        self.showAlert = false
+                        self.viewModel.callbackValueFromNative.send(UUID().uuidString)
+                    }))
+                }
+                .onReceive(self.viewModel.webTitle, perform: { receivedTitle in
+                    self.webTitle = receivedTitle
+                })
+                .onReceive(self.viewModel.showAlert, perform: {result in
+                    self.showAlert = result
+                })
+            }
+        }
     }
 }
 
